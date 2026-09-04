@@ -1,0 +1,4 @@
+uid=5_1 RootWebArea "Relief Dashboard" focusable focused url="http://localhost:3000/"
+  uid=5_2 button "Enable accessibility" focusable live="polite" relevant="additions text"
+  uid=5_3 generic focusable
+    uid=5_4 textbox editable="plaintext" focusable focused invalid="false" settable
