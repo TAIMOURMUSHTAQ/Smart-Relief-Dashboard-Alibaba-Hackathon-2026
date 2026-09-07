@@ -70,7 +70,7 @@ class _InventoryFormSheetState extends State<InventoryFormSheet> {
       }
 
       if (mounted) Navigator.of(context).pop();
-    } on Exception catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -113,7 +113,7 @@ class _InventoryFormSheetState extends State<InventoryFormSheet> {
         widget.item!.id!,
       );
       if (mounted) Navigator.of(context).pop();
-    } on Exception catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -167,6 +167,7 @@ class _InventoryFormSheetState extends State<InventoryFormSheet> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _category,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items:
                     InventoryItem.categories
@@ -181,6 +182,7 @@ class _InventoryFormSheetState extends State<InventoryFormSheet> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: _warehouseId,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Warehouse'),
                 items:
                     widget.warehouses

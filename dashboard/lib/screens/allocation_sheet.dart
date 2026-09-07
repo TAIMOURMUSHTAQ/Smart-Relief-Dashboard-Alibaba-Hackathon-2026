@@ -92,7 +92,7 @@ class _AllocationSheetState extends State<AllocationSheet> {
         allocations: allocations,
       );
       if (mounted) Navigator.of(context).pop();
-    } on Exception catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -154,6 +154,7 @@ class _AllocationSheetState extends State<AllocationSheet> {
                             choice.warehouseId.isEmpty
                                 ? null
                                 : choice.warehouseId,
+                        isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'Warehouse',
                         ),

@@ -24,6 +24,19 @@ class InventoryScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
+              if (inventorySnap.hasError || warehouseSnap.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Could not load inventory:\n'
+                      '${inventorySnap.error ?? warehouseSnap.error}',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              }
+
               final items = inventorySnap.data ?? [];
               final warehouses = warehouseSnap.data ?? [];
               final warehouseMap = {

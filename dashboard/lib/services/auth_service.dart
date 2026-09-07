@@ -5,8 +5,12 @@ import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 
 class AuthService extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  AuthService({FirebaseAuth? auth, FirebaseFirestore? firestore})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
 
   User? get currentUser => _auth.currentUser;
 
@@ -77,8 +81,9 @@ class AuthService extends ChangeNotifier {
         final password = account['password']!;
         final role = account['role']!;
 
+        UserCredential cred;
         try {
-          await _auth.signInWithEmailAndPassword(
+          cred = await _auth.signInWithEmailAndPassword(
             email: email,
             password: password,
           );
@@ -86,18 +91,25 @@ class AuthService extends ChangeNotifier {
           if (e.code == 'invalid-credential' ||
               e.code == 'user-not-found' ||
               e.code == 'wrong-password') {
-            final cred = await _auth.createUserWithEmailAndPassword(
+            cred = await _auth.createUserWithEmailAndPassword(
               email: email,
               password: password,
             );
-            await _firestore.collection('users').doc(cred.user!.uid).set({
-              'name': role == 'admin' ? 'Demo Admin' : 'Demo Volunteer',
-              'role': role,
-              'phone': '+92-000-0000000',
-            });
           } else {
             rethrow;
           }
+        }
+
+        final profile = await _firestore
+            .collection('users')
+            .doc(cred.user!.uid)
+            .get();
+        if (!profile.exists) {
+          await _firestore.collection('users').doc(cred.user!.uid).set({
+            'name': role == 'admin' ? 'Demo Admin' : 'Demo Volunteer',
+            'role': role,
+            'phone': '+92-000-0000000',
+          });
         }
       } catch (e) {
         debugPrint('Seed account error: $e');

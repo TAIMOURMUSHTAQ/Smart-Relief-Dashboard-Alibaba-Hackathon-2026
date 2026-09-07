@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -24,11 +26,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await context.read<AuthService>().signIn(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
-    } on Exception catch (e) {
+      await context
+          .read<AuthService>()
+          .signIn(_emailController.text.trim(), _passwordController.text)
+          .timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Login is taking too long. Check your internet connection and try again.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -84,6 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
                   TextFormField(
+                    key: const Key('login_email'),
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
@@ -99,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    key: const Key('login_password'),
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
@@ -126,6 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
+                    key: const Key('login_submit'),
                     onPressed: _isLoading ? null : _login,
                     child:
                         _isLoading
@@ -141,6 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextButton(
+                    key: const Key('login_signup_link'),
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(

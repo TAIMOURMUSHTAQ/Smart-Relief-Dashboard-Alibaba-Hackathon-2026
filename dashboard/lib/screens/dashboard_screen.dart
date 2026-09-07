@@ -24,6 +24,19 @@ class DashboardScreen extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
+              if (requestSnap.hasError || inventorySnap.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Could not load dashboard data:\n'
+                      '${requestSnap.error ?? inventorySnap.error}',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              }
+
               final requests = requestSnap.data ?? [];
               final inventory = inventorySnap.data ?? [];
 

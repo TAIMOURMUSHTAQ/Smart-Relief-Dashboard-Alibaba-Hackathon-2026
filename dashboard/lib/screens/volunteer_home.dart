@@ -30,6 +30,7 @@ class _VolunteerHomeState extends State<VolunteerHome> {
         title: const Text('Relief Dashboard'),
         actions: [
           IconButton(
+            key: const Key('volunteer_logout'),
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
             onPressed: () => context.read<AuthService>().signOut(),
@@ -38,6 +39,7 @@ class _VolunteerHomeState extends State<VolunteerHome> {
       ),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        key: const Key('volunteer_bottom_nav'),
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [

@@ -40,10 +40,48 @@ class AuthGate extends StatelessWidget {
               );
             }
 
+            if (userSnap.hasError) {
+              return Scaffold(
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Could not load your profile:\n${userSnap.error}',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => authService.signOut(),
+                          child: const Text('Sign out'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
             final userModel = userSnap.data;
             if (userModel == null) {
-              return const Scaffold(
-                body: Center(child: Text('User profile not found.')),
+              return Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('User profile not found.'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => authService.signOut(),
+                        child: const Text('Sign out'),
+                      ),
+                    ],
+                  ),
+                ),
               );
             }
 

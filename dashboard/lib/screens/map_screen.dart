@@ -26,6 +26,19 @@ class MapScreen extends StatelessWidget {
           return StreamBuilder<List<Warehouse>>(
             stream: context.read<FirestoreService>().warehousesStream,
             builder: (context, warehouseSnap) {
+              if (requestSnap.hasError || warehouseSnap.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Could not load map data:\n'
+                      '${requestSnap.error ?? warehouseSnap.error}',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              }
+
               final warehouses = warehouseSnap.data ?? [];
               final allRequests = requestSnap.data ?? [];
               final requests =

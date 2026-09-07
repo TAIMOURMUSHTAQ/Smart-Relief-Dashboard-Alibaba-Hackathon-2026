@@ -45,11 +45,13 @@ class _AdminHomeState extends State<AdminHome> {
         title: const Text('Relief Coordinator'),
         actions: [
           IconButton(
+            key: const Key('admin_seed'),
             icon: const Icon(Icons.eco_outlined),
             tooltip: 'Seed demo data',
             onPressed: _seedData,
           ),
           IconButton(
+            key: const Key('admin_logout'),
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
             onPressed: () => context.read<AuthService>().signOut(),
@@ -58,6 +60,7 @@ class _AdminHomeState extends State<AdminHome> {
       ),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        key: const Key('admin_bottom_nav'),
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [

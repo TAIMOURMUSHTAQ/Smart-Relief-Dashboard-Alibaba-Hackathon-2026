@@ -10,8 +10,16 @@ import '../models/relief_request.dart';
 import '../models/warehouse.dart';
 
 class FirestoreService extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  FirestoreService({FirebaseFirestore? firestore, FirebaseStorage? storage})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _injectedStorage = storage;
+
+  final FirebaseFirestore _firestore;
+  final FirebaseStorage? _injectedStorage;
+
+  // Lazy: only touches FirebaseStorage.instance (which requires a real
+  // Firebase app) the first time a photo upload is actually attempted.
+  FirebaseStorage get _storage => _injectedStorage ?? FirebaseStorage.instance;
 
   // Warehouses
   Stream<List<Warehouse>> get warehousesStream {

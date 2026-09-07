@@ -53,6 +53,21 @@ class _AdminRequestsScreenState extends State<AdminRequestsScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
+                  if (requestSnap.hasError ||
+                      inventorySnap.hasError ||
+                      warehouseSnap.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'Could not load requests:\n'
+                          '${requestSnap.error ?? inventorySnap.error ?? warehouseSnap.error}',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    );
+                  }
+
                   final requests = requestSnap.data ?? [];
                   final inventory = inventorySnap.data ?? [];
                   final warehouses = warehouseSnap.data ?? [];

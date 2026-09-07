@@ -65,6 +65,9 @@ class FirebaseErrorApp extends StatelessWidget {
   }
 }
 
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 class ReliefDashboardApp extends StatelessWidget {
   const ReliefDashboardApp({super.key});
 
@@ -79,6 +82,7 @@ class ReliefDashboardApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Relief Dashboard',
         debugShowCheckedModeBanner: false,
+        scaffoldMessengerKey: rootScaffoldMessengerKey,
         theme: AppTheme.lightTheme,
         home: const AuthGate(),
       ),

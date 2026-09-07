@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../main.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
@@ -28,15 +31,34 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await context.read<AuthService>().signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        name: _nameController.text.trim(),
-        role: _role,
-        phone: _phoneController.text.trim(),
+      await context
+          .read<AuthService>()
+          .signUp(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            name: _nameController.text.trim(),
+            role: _role,
+            phone: _phoneController.text.trim(),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        const SnackBar(content: Text('Account created successfully')),
       );
-      if (mounted) Navigator.of(context).pop();
-    } on Exception catch (e) {
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } on TimeoutException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Sign up is taking too long. Check your internet connection and try again.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -79,6 +101,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 24),
                 TextFormField(
+                  key: const Key('signup_name'),
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Full Name',
@@ -93,6 +116,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  key: const Key('signup_email'),
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
@@ -108,6 +132,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  key: const Key('signup_phone'),
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
@@ -123,7 +148,9 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
+                  key: const Key('signup_role'),
                   initialValue: _role,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Role',
                     prefixIcon: Icon(Icons.badge_outlined),
@@ -144,6 +171,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  key: const Key('signup_password'),
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
@@ -171,6 +199,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  key: const Key('signup_confirm'),
                   controller: _confirmPasswordController,
                   obscureText: _obscurePassword,
                   decoration: const InputDecoration(
@@ -186,6 +215,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
+                  key: const Key('signup_submit'),
                   onPressed: _isLoading ? null : _signUp,
                   child:
                       _isLoading

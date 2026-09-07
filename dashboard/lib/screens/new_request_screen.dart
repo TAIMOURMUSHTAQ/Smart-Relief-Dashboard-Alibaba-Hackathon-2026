@@ -28,13 +28,14 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   final _notesController = TextEditingController();
   String _urgency = ReliefRequest.urgencyMedium;
   final List<_ItemNeed> _itemsNeeded = [];
+  int _nextItemUid = 0;
   XFile? _photo;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _itemsNeeded.add(const _ItemNeed(itemName: '', qty: 1));
+    _itemsNeeded.add(_ItemNeed(uid: _nextItemUid++, itemName: '', qty: 1));
   }
 
   Future<void> _getLocation() async {
@@ -71,7 +72,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         _latController.text = position.latitude.toStringAsFixed(6);
         _lngController.text = position.longitude.toStringAsFixed(6);
       });
-    } on Exception catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -138,7 +139,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
           const SnackBar(content: Text('Request submitted successfully')),
         );
       }
-    } on Exception catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -158,7 +159,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
     _urgency = ReliefRequest.urgencyMedium;
     _photo = null;
     _itemsNeeded.clear();
-    _itemsNeeded.add(const _ItemNeed(itemName: '', qty: 1));
+    _itemsNeeded.add(_ItemNeed(uid: _nextItemUid++, itemName: '', qty: 1));
   }
 
   @override
@@ -181,6 +182,18 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Could not load inventory:\n${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
           final inventory = snapshot.data ?? [];
           final itemNames = inventory.map((i) => i.itemName).toSet().toList()
             ..sort();
@@ -200,6 +213,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
+                    key: const Key('request_area'),
                     controller: _areaController,
                     decoration: const InputDecoration(
                       labelText: 'Affected Area Name',
@@ -253,6 +267,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    key: const Key('request_headcount'),
                     controller: _headcountController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
@@ -305,76 +320,128 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
                   ..._itemsNeeded.asMap().entries.map((entry) {
                     final index = entry.key;
                     final item = entry.value;
-                    return Row(
+                    final dropdownValue =
+                        item.isCustom
+                            ? _ItemNeed.customValue
+                            : (item.itemName.isEmpty ? null : item.itemName);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          flex: 2,
-                          child: DropdownButtonFormField<String>(
-                            key: ValueKey('item-$index-${item.itemName}'),
-                            initialValue:
-                                item.itemName.isEmpty ? null : item.itemName,
-                            decoration: const InputDecoration(
-                              labelText: 'Item',
-                            ),
-                            items:
-                                itemNames
-                                    .map(
-                                      (name) => DropdownMenuItem(
-                                        value: name,
-                                        child: Text(name),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: DropdownButtonFormField<String>(
+                                key: ValueKey('item-${item.uid}'),
+                                initialValue: dropdownValue,
+                                isExpanded: true,
+                                decoration: const InputDecoration(
+                                  labelText: 'Item (from inventory)',
+                                ),
+                                items: [
+                                  ...itemNames.map(
+                                    (name) => DropdownMenuItem(
+                                      value: name,
+                                      child: Text(
+                                        name,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    )
-                                    .toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _itemsNeeded[index] = _itemsNeeded[index]
-                                    .copyWith(itemName: value ?? '');
-                              });
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Select item';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            initialValue: item.qty.toString(),
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Qty',
+                                    ),
+                                  ),
+                                  const DropdownMenuItem(
+                                    value: _ItemNeed.customValue,
+                                    child: Text('Other (custom item)'),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setState(() {
+                                    if (value == _ItemNeed.customValue) {
+                                      _itemsNeeded[index] = _itemsNeeded[index]
+                                          .copyWith(
+                                            itemName: '',
+                                            isCustom: true,
+                                          );
+                                    } else {
+                                      _itemsNeeded[index] = _itemsNeeded[index]
+                                          .copyWith(
+                                            itemName: value,
+                                            isCustom: false,
+                                          );
+                                    }
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Select item';
+                                  }
+                                  return null;
+                                },
+                              ),
                             ),
-                            onChanged: (value) {
-                              setState(() {
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                key: ValueKey('qty-${item.uid}'),
+                                initialValue: item.qty.toString(),
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  labelText: 'Qty',
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _itemsNeeded[index] = _itemsNeeded[index]
+                                        .copyWith(
+                                          qty: int.tryParse(value) ?? 0,
+                                        );
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null ||
+                                      int.tryParse(value) == null ||
+                                      int.parse(value) <= 0) {
+                                    return '>0';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline),
+                              color: AppTheme.critical,
+                              onPressed:
+                                  _itemsNeeded.length > 1
+                                      ? () => setState(
+                                        () => _itemsNeeded.removeAt(index),
+                                      )
+                                      : null,
+                            ),
+                          ],
+                        ),
+                        if (item.isCustom)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top: 8,
+                              bottom: 8,
+                            ),
+                            child: TextFormField(
+                              key: ValueKey('custom-item-${item.uid}'),
+                              initialValue: item.itemName,
+                              decoration: const InputDecoration(
+                                labelText: 'Custom item name',
+                              ),
+                              onChanged: (value) {
                                 _itemsNeeded[index] = _itemsNeeded[index]
-                                    .copyWith(
-                                      qty: int.tryParse(value) ?? 0,
-                                    );
-                              });
-                            },
-                            validator: (value) {
-                              if (value == null ||
-                                  int.tryParse(value) == null ||
-                                  int.parse(value) <= 0) {
-                                return '>0';
-                              }
-                              return null;
-                            },
+                                    .copyWith(itemName: value);
+                              },
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Enter item name';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          color: AppTheme.critical,
-                          onPressed:
-                              _itemsNeeded.length > 1
-                                  ? () => setState(
-                                    () => _itemsNeeded.removeAt(index),
-                                  )
-                                  : null,
-                        ),
                       ],
                     );
                   }),
@@ -383,7 +450,11 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
                     onPressed: () {
                       setState(
                         () => _itemsNeeded.add(
-                          const _ItemNeed(itemName: '', qty: 1),
+                          _ItemNeed(
+                            uid: _nextItemUid++,
+                            itemName: '',
+                            qty: 1,
+                          ),
                         ),
                       );
                     },
@@ -429,6 +500,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
                     ),
                   const SizedBox(height: 24),
                   ElevatedButton(
+                    key: const Key('request_submit'),
                     onPressed: _isLoading ? null : () => _submit(inventory),
                     child:
                         _isLoading
@@ -454,15 +526,26 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
 }
 
 class _ItemNeed {
+  static const String customValue = '__custom__';
+
+  final int uid;
   final String itemName;
   final int qty;
+  final bool isCustom;
 
-  const _ItemNeed({required this.itemName, required this.qty});
+  const _ItemNeed({
+    required this.uid,
+    required this.itemName,
+    required this.qty,
+    this.isCustom = false,
+  });
 
-  _ItemNeed copyWith({String? itemName, int? qty}) {
+  _ItemNeed copyWith({String? itemName, int? qty, bool? isCustom}) {
     return _ItemNeed(
+      uid: uid,
       itemName: itemName ?? this.itemName,
       qty: qty ?? this.qty,
+      isCustom: isCustom ?? this.isCustom,
     );
   }
 }
